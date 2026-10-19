@@ -124,6 +124,15 @@ select{font-family:var(--f-display);font-size:14px;background:#0d1014;color:var(
   button{padding:6px 8px;font-size:12px}
   #gears button{width:36px;padding:5px 0;font-size:14px}
 }
+@media (max-height:520px){
+  #gaugeSvg{max-height:24vh;width:auto;margin:0 auto}
+  #gaugeBox{padding:6px 8px}
+  #tend{min-height:0;font-size:11px}
+  #hold{font-size:10.5px}
+  #faults{max-height:16vh}
+  #readout{padding:5px 8px}
+  #gear{font-size:30px}
+}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 </style>
 
@@ -772,8 +781,15 @@ function layout(){
   const portrait=h>w;
   let mw;
   mirL.rotation.z=mirR.rotation.z=0;
-  if(view==='driver'){mw=clamp(w*(portrait?0.38:0.22),130,380);const cy=h*(portrait?0.6:0.5),pad=Math.max(10,w*0.012);
-    mirL.position.set(pad+mw/2,h-cy,0);mirR.position.set(w-pad-mw/2,h-cy,0);}
+  if(view==='driver'){
+    // el retrovisor izquierdo empieza a la derecha de los paneles de la izquierda para que nunca quede tapado
+    const pad=Math.max(10,w*0.012);let left=pad;
+    ['cluster','gaugeBox'].forEach(id=>{const el=$(id);if(el&&!el.hidden){const r=el.getBoundingClientRect();if(r.width)left=Math.max(left,r.right+10);}});
+    let right=pad;const tp=$('top').getBoundingClientRect();
+    mw=clamp(w*(portrait?0.38:0.22),110,380);
+    mw=Math.min(mw,(w-left-right-24)/2);
+    const cy=h*(portrait?0.6:0.5);
+    mirL.position.set(left+mw/2,h-cy,0);mirR.position.set(w-right-mw/2,h-cy,0);}
   else{mw=clamp(w*(portrait?0.26:0.14),100,240);const cy=(portrait?150:72)+mw*0.31,gap=10;
     mirL.position.set(w/2-gap/2-mw/2,h-cy,0);mirR.position.set(w/2+gap/2+mw/2,h-cy,0);}
   mirL.scale.set(mw,mw,1);mirR.scale.set(mw,mw,1);
@@ -802,6 +818,7 @@ function applyMode(){
   document.querySelectorAll('#views button').forEach(b=>{b.disabled=exam&&b.dataset.view!=='driver';b.style.opacity=b.disabled?0.35:1;});
   if(exam)setView('driver');
   drawGaugeStatic();
+  layout();
 }
 
 /* ===================== faltas ===================== */
